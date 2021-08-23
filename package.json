@@ -2,9 +2,9 @@
   "name": "markerjs2",
   "version": "2.11.1",
   "description": "JavaScript image annotation",
-  "main": "markerjs2.js",
-  "module": "markerjs2.esm.js",
-  "types": "markerjs2.d.ts",
+  "main": "dist/markerjs2.js",
+  "module": "dist/markerjs2.esm.js",
+  "types": "dist/markerjs2.d.ts",
   "author": "Alan Mendelevich",
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
