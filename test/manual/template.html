@@ -9,7 +9,9 @@
     document.addEventListener("DOMContentLoaded", function () {
       experiments = new markerjs2.Experiments();
     });    
-
+		function markerEventListener(marker,type,data) {
+			console.log(marker,type,data)
+		}
     // class ComponentImage extends HTMLElement {
     //   constructor() {
     //     super();
@@ -103,8 +105,14 @@
       <button onclick="experiments.renderAndClose()">render</button>
       <button onclick="experiments.getState()">get state</button>
       <button onclick="experiments.restoreState()">restore state</button>
+			<button onclick="experiments.addMarkerEventListener(markerEventListener)">add marker event listener</button>
+			<button onclick="experiments.removeMarkerEventListener(markerEventListener)">remove marker event listener</button>
     </div>
     <!-- <component-image></component-image> -->
   </div>
+	<div>
+		<textarea rows="5" id="events-console">
+		</textarea>
+	</div>
 </body>
 </html>

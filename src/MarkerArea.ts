@@ -47,6 +47,14 @@ export type RenderEventHandler = (
  * Event handler type for {@linkcode MarkerArea} `close` event.
  */
 export type CloseEventHandler = () => void;
+/**
+ * Event handler type for {@linkcode MarkerArea} `marker-action` event.
+ */
+export type MarkerEventHandler = (
+  marker: MarkerBase,
+  type: string,
+	data?: object
+) => void;
 
 /**
  * MarkerArea is the main class of marker.js 2. It controls the behavior and appearance of the library.
@@ -215,6 +223,7 @@ export class MarkerArea {
 
   private renderEventListeners: RenderEventHandler[] = [];
   private closeEventListeners: CloseEventHandler[] = [];
+  private markerEventListeners: MarkerEventHandler[] = [];
 
   public settings: Settings = new Settings();
   public uiStyleSettings: IStyleSettings;
@@ -320,6 +329,8 @@ export class MarkerArea {
     this.removeCloseEventListener = this.removeCloseEventListener.bind(this);
     this.addRenderEventListener = this.addRenderEventListener.bind(this);
     this.removeRenderEventListener = this.removeRenderEventListener.bind(this);
+    this.addMarkerEventListener = this.addMarkerEventListener.bind(this);
+    this.removeMarkerEventListener = this.removeMarkerEventListener.bind(this);
     this.clientToLocalCoordinates = this.clientToLocalCoordinates.bind(this);
     this.onWindowResize = this.onWindowResize.bind(this);
     this.deleteSelectedMarker = this.deleteSelectedMarker.bind(this);
@@ -471,6 +482,29 @@ export class MarkerArea {
     if (this.closeEventListeners.indexOf(listener) > -1) {
       this.closeEventListeners.splice(
         this.closeEventListeners.indexOf(listener),
+        1
+      );
+    }
+  }
+
+  /**
+   * Add a `marker` event handler to perform actions in your code after a marker operation
+   *
+   * @param listener - marker event listener
+   */
+  public addMarkerEventListener(listener: MarkerEventHandler): void {
+    this.markerEventListeners.push(listener);
+  }
+
+  /**
+   * Remove a `marker` event handler.
+   *
+   * @param listener - previously registered `marker` event handler.
+   */
+  public removeMarkerEventListener(listener: MarkerEventHandler): void {
+    if (this.markerEventListeners.indexOf(listener) > -1) {
+      this.markerEventListeners.splice(
+        this.markerEventListeners.indexOf(listener),
         1
       );
     }
@@ -833,6 +867,7 @@ export class MarkerArea {
     if (this.markers.indexOf(marker) > -1) {
       this.markers.splice(this.markers.indexOf(marker), 1);
     }
+		this.markerEventListeners.forEach((listener) => listener(marker,'removed'));
     marker.dispose();
   }
 
@@ -905,6 +940,7 @@ export class MarkerArea {
    */
   public deleteSelectedMarker(): void {
     if (this.currentMarker !== undefined) {
+			this.markerEventListeners.forEach((listener) => listener(this.currentMarker,'removed'));
       this.currentMarker.dispose();
       this.markerImage.removeChild(this.currentMarker.container);
       this.markers.splice(this.markers.indexOf(this.currentMarker), 1);
@@ -1092,6 +1128,7 @@ export class MarkerArea {
     this.mode = 'select';
     this.markerImage.style.cursor = 'default';
     this.markers.push(marker);
+		this.markerEventListeners.forEach((listener) => listener(marker,'created'));
     this.setCurrentMarker(marker);
     if (
       marker instanceof FreehandMarker &&
@@ -1122,14 +1159,19 @@ export class MarkerArea {
    * @param marker marker to select. Deselects current marker if undefined.
    */
   public setCurrentMarker(marker?: MarkerBase): void {
+		if (marker == this.currentMarker)
+			return
+			
     if (this.currentMarker !== undefined) {
       this.currentMarker.deselect();
+			this.markerEventListeners.forEach((listener) => listener(this.currentMarker,'deselected'));
       this.toolbar.setCurrentMarker();
       this.toolbox.setPanelButtons([]);
     }
     this.currentMarker = marker;
     if (this.currentMarker !== undefined) {
       this.currentMarker.select();
+			this.markerEventListeners.forEach((listener) => listener(marker,'selected'));
       this.toolbar.setCurrentMarker(this.currentMarker);
       this.toolbox.setPanelButtons(this.currentMarker.toolboxPanels);
     }

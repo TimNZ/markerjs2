@@ -137,4 +137,11 @@ export class Experiments {
     }
   }
 
+	public addMarkerEventListener(listener): void {
+		this.markerArea1.addMarkerEventListener(listener)
+	}
+	public removeMarkerEventListener(listener): void {
+		this.markerArea1.removeMarkerEventListener(listener)
+	}
+
 }
