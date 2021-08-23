@@ -54,7 +54,7 @@ export type CloseEventHandler = () => void;
 export type MarkerEventHandler = (
   marker: MarkerBase,
   type: string,
-	data?: object
+	data?: unknown
 ) => void;
 
 /**

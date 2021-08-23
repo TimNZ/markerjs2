@@ -82,7 +82,7 @@ export class MarkerBase {
   /**
    * Method called when marker state changes.
    */
-  public onStateChanged: (marker: MarkerBase, newState: object) => void;
+  public onStateChanged: (marker: MarkerBase, newState: unknown) => void;
 
   /**
    * Creates a new marker.
