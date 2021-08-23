@@ -4,6 +4,7 @@ import { Renderer } from './core/Renderer';
 
 import Logo from './assets/markerjs-logo-m.svg';
 import { MarkerBase } from './core/MarkerBase';
+import { MarkerBaseState } from './core/MarkerBaseState';
 import { Toolbar, ToolbarButtonType } from './ui/Toolbar';
 import { Toolbox } from './ui/Toolbox';
 import { FrameMarker } from './markers/frame-marker/FrameMarker';
@@ -337,6 +338,7 @@ export class MarkerArea {
     this.setWindowHeight = this.setWindowHeight.bind(this);
     this.removeMarker = this.removeMarker.bind(this);
     this.colorChanged = this.colorChanged.bind(this);
+    this.markerStateChanged = this.markerStateChanged.bind(this);
     this.fillColorChanged = this.fillColorChanged.bind(this);
     this.onPopupTargetResize = this.onPopupTargetResize.bind(this);
     this.showNotesEditor = this.showNotesEditor.bind(this);
@@ -1118,6 +1120,7 @@ export class MarkerArea {
     this.setCurrentMarker();
     this.currentMarker = this.addNewMarker(markerType);
     this.currentMarker.onMarkerCreated = this.markerCreated;
+    this.currentMarker.onStateChanged = this.markerStateChanged;
     this.currentMarker.onColorChanged = this.colorChanged;
     this.currentMarker.onFillColorChanged = this.fillColorChanged;
     this.markerImage.style.cursor = 'crosshair';
@@ -1141,6 +1144,9 @@ export class MarkerArea {
     this.addUndoStep();
   }
 
+	private markerStateChanged(marker: MarkerBase, newState: MarkerBaseState) : void {
+		this.markerEventListeners.forEach((listener) => listener(marker,'state-changed',newState));
+	}
   private colorChanged(color: string): void {
     if (this.settings.defaultColorsFollowCurrentColors) {
       this.settings.defaultColor = color;
@@ -1161,7 +1167,7 @@ export class MarkerArea {
   public setCurrentMarker(marker?: MarkerBase): void {
 		if (marker == this.currentMarker)
 			return
-			
+
     if (this.currentMarker !== undefined) {
       this.currentMarker.deselect();
 			this.markerEventListeners.forEach((listener) => listener(this.currentMarker,'deselected'));

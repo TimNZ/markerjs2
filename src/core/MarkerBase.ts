@@ -80,6 +80,11 @@ export class MarkerBase {
   public onFillColorChanged?: (color: string) => void;
 
   /**
+   * Method called when marker state changes.
+   */
+  public onStateChanged: (marker: MarkerBase, newState: object) => void;
+
+  /**
    * Creates a new marker.
    *
    * @param container - SVG container to hold marker's visual.
@@ -193,6 +198,16 @@ export class MarkerBase {
    */
   // eslint-disable-next-line @typescript-eslint/no-empty-function, @typescript-eslint/no-unused-vars
   public scale(scaleX: number, scaleY: number): void {}
+
+  /**
+   * Called by a marker when its state changes.
+   * @param color 
+   */
+  protected stateChanged(): void {
+    if (this.onStateChanged) {
+      this.onStateChanged(this,this.getState());
+    }
+  }
 
   /**
    * Called by a marker when its foreground color changes.

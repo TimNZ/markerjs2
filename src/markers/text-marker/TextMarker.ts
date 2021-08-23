@@ -397,6 +397,7 @@ export class TextMarker extends RectangularBoxMarkerBase {
     this.overlayContainer.innerHTML = '';
     this.renderText();
     this.showVisual();
+		this.stateChanged();
   }
 
   /**
@@ -433,6 +434,7 @@ export class TextMarker extends RectangularBoxMarkerBase {
       this.textEditor.style.color = this.color;
     }
     this.colorChanged(color);
+		this.stateChanged()
   }
 
   /**
