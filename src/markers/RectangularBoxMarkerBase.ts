@@ -256,11 +256,15 @@ export class RectangularBoxMarkerBase extends MarkerBase {
         this.offsetY;
       this.moveVisual({x: this.left, y: this.top});
       this.adjustControlBox();
+			this.stateChanged();
     } else if (this.state === 'resize') {
       this.resize(rotatedPoint);
+			this.stateChanged();
     } else if (this.state === 'rotate') {
       this.rotate(point);
+			this.stateChanged();
     }
+		
   }
 
   /**
