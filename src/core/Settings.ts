@@ -1,3 +1,4 @@
+
 /**
  * Represents a list of colors.
  */
@@ -23,7 +24,7 @@ export class Settings {
     '#7C3AED', // purple
     '#F472B6', // pink
     '#000000', // black
-    '#FFFFFF' //white
+    '#FFFFFF', //white
   ];
 
   /**
@@ -64,7 +65,7 @@ export class Settings {
    * Stroke (line) width options.
    */
   public defaultStrokeWidths = [1, 2, 3, 5, 10];
-  
+
   /**
    * Stroke dash array options.
    */
@@ -88,7 +89,7 @@ export class Settings {
     'Helvetica, Arial, sans-serif',
     'Courier, "Courier New", monospace',
     'cursive',
-    'fantasy'
+    'fantasy',
   ];
 
   /**
@@ -102,10 +103,30 @@ export class Settings {
   public newFreehandMarkerOnPointerUp = false;
 
   /**
-   * If set to true, when colors on a marker are changed 
+   * If set to true, when colors on a marker are changed
    * it changes the default color for other markers as well.
-   * 
+   *
    * @since 2.7.0
    */
   public defaultColorsFollowCurrentColors = false;
+
+  /**
+   * If set to true, zoom is enabled
+   */
+  public zoomEnabled = false;
+
+  /**
+   * Minimum zoom level
+   */
+  public zoomMinimum = 0.1;
+
+  /**
+   * Maximum zoom level
+   */
+  public zoomMaximum = 2;
+
+  /**
+   * Maximum zoom level
+   */
+  public zoomInitial = 1;
 }

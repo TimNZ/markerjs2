@@ -7,6 +7,7 @@ import { MarkerBase } from './core/MarkerBase';
 import { MarkerBaseState } from './core/MarkerBaseState';
 import { Toolbar, ToolbarButtonType } from './ui/Toolbar';
 import { Toolbox } from './ui/Toolbox';
+import { ZoomControl } from './ui/ZoomControl';
 import { FrameMarker } from './markers/frame-marker/FrameMarker';
 import { Settings } from './core/Settings';
 import { Style } from './core/Style';
@@ -25,6 +26,7 @@ import { IPoint } from './core/IPoint';
 import { EllipseFrameMarker } from './markers/ellipse-frame-marker/EllipseFrameMarker';
 import { UndoRedoManager } from './core/UndoRedoManager';
 import { CurveMarker } from './markers/curve-marker/CurveMarker';
+import { ZoomEvent } from './core/ZoomEvent';
 
 /**
  * @ignore
@@ -54,7 +56,7 @@ export type CloseEventHandler = () => void;
 export type MarkerEventHandler = (
   marker: MarkerBase,
   type: string,
-	data?: unknown
+  data?: unknown
 ) => void;
 
 /**
@@ -89,6 +91,7 @@ export class MarkerArea {
   private left: number;
   private top: number;
   private windowHeight: number;
+  private zoomLevel: number;
 
   private markerImage: SVGSVGElement;
   private markerImageHolder: HTMLDivElement;
@@ -137,7 +140,7 @@ export class MarkerArea {
       MeasurementMarker,
       CoverMarker,
       LineMarker,
-      CurveMarker
+      CurveMarker,
     ];
   }
 
@@ -209,6 +212,7 @@ export class MarkerArea {
 
   private toolbar: Toolbar;
   private toolbox: Toolbox;
+  private zoomControl: ZoomControl;
 
   private mode: MarkerAreaMode = 'select';
 
@@ -854,11 +858,25 @@ export class MarkerArea {
       this.uiStyleSettings
     );
     this.toolbox.show(this.uiStyleSettings.hideToolbox ? 'hidden' : 'visible');
+
+		if (this.settings.zoomEnabled) {
+			this.zoomLevel = this.settings.zoomInitial
+			this.zoomControl = new ZoomControl(this, {
+				enabled: this.settings.zoomEnabled,
+        initial: this.settings.zoomInitial,
+        minimum: this.settings.zoomMinimum,
+        maximum: this.settings.zoomMaximum,
+      });
+			this.zoomControl.addEventListener(this.zoomControlEvent)
+		}
   }
 
   private closeUI() {
     if (this.settings.displayMode === 'popup') {
       this.restoreOverflow();
+
+		if (this.zoomControl)
+			this.zoomControl.dispose()
     }
     // @todo better cleanup
     this.targetRoot.removeChild(this.coverDiv);
@@ -869,7 +887,9 @@ export class MarkerArea {
     if (this.markers.indexOf(marker) > -1) {
       this.markers.splice(this.markers.indexOf(marker), 1);
     }
-		this.markerEventListeners.forEach((listener) => listener(marker,'removed'));
+    this.markerEventListeners.forEach((listener) =>
+      listener(marker, 'removed')
+    );
     marker.dispose();
   }
 
@@ -942,7 +962,9 @@ export class MarkerArea {
    */
   public deleteSelectedMarker(): void {
     if (this.currentMarker !== undefined) {
-			this.markerEventListeners.forEach((listener) => listener(this.currentMarker,'removed'));
+      this.markerEventListeners.forEach((listener) =>
+        listener(this.currentMarker, 'removed')
+      );
       this.currentMarker.dispose();
       this.markerImage.removeChild(this.currentMarker.container);
       this.markers.splice(this.markers.indexOf(this.currentMarker), 1);
@@ -1131,7 +1153,9 @@ export class MarkerArea {
     this.mode = 'select';
     this.markerImage.style.cursor = 'default';
     this.markers.push(marker);
-		this.markerEventListeners.forEach((listener) => listener(marker,'created'));
+    this.markerEventListeners.forEach((listener) =>
+      listener(marker, 'created')
+    );
     this.setCurrentMarker(marker);
     if (
       marker instanceof FreehandMarker &&
@@ -1144,9 +1168,14 @@ export class MarkerArea {
     this.addUndoStep();
   }
 
-	private markerStateChanged(marker: MarkerBase, newState: MarkerBaseState) : void {
-		this.markerEventListeners.forEach((listener) => listener(marker,'state-changed',newState));
-	}
+  private markerStateChanged(
+    marker: MarkerBase,
+    newState: MarkerBaseState
+  ): void {
+    this.markerEventListeners.forEach((listener) =>
+      listener(marker, 'state-changed', newState)
+    );
+  }
   private colorChanged(color: string): void {
     if (this.settings.defaultColorsFollowCurrentColors) {
       this.settings.defaultColor = color;
@@ -1165,19 +1194,22 @@ export class MarkerArea {
    * @param marker marker to select. Deselects current marker if undefined.
    */
   public setCurrentMarker(marker?: MarkerBase): void {
-		if (marker == this.currentMarker)
-			return
+    if (marker == this.currentMarker) return;
 
     if (this.currentMarker !== undefined) {
       this.currentMarker.deselect();
-			this.markerEventListeners.forEach((listener) => listener(this.currentMarker,'deselected'));
+      this.markerEventListeners.forEach((listener) =>
+        listener(this.currentMarker, 'deselected')
+      );
       this.toolbar.setCurrentMarker();
       this.toolbox.setPanelButtons([]);
     }
     this.currentMarker = marker;
     if (this.currentMarker !== undefined) {
       this.currentMarker.select();
-			this.markerEventListeners.forEach((listener) => listener(marker,'selected'));
+      this.markerEventListeners.forEach((listener) =>
+        listener(marker, 'selected')
+      );
       this.toolbar.setCurrentMarker(this.currentMarker);
       this.toolbox.setPanelButtons(this.currentMarker.toolboxPanels);
     }
@@ -1308,4 +1340,64 @@ export class MarkerArea {
     this.positionMarkerImage();
     this.positionLogo();
   }
+
+	public setZoomLevel(level: number): void {
+		this.zoomControl && this.zoomControl.setZoomLevel(level)
+	}
+
+	public disableZoom() : void
+	{
+		this.zoomControl && this.zoomControl.hide()
+	}
+
+	public enableZoom() : void
+	{
+		this.zoomControl && this.zoomControl.show()
+	}
+
+
+	public panTo(x: number,y: number): void {
+		return;
+	}
+
+	/**
+	 * Pan to the center of the marker, not exceeding boundary of image
+	 */
+	public panToMarker(marker: MarkerBase, selectMarker = false ): void {
+	const state: any = marker.getState();
+		let left,top,right,bottom,width,height;
+		if (state.x1) {
+      left = state.x1;
+      right = state.x2;
+      top = state.y1;
+      bottom = state.y2;
+      width = right - left;
+      height = bottom - top;
+    } else {
+      left = state.left;
+      top = state.top;
+      width = state.width;
+      height = state.height;
+      right = left + width;
+      bottom = top + height;
+    }
+		// @todo: calc pan to point
+    const panToX = left;
+		const panToY = top;
+		this.panTo(panToX,panToY);
+		if (selectMarker)
+			this.setCurrentMarker(marker)
+	}
+
+	private zoomControlEvent({type, zoomLevel}: ZoomEvent) {
+		switch(type)
+		{
+			case 'decrease':
+			case 'increase': 
+			case 'reset':
+				this.setZoomLevel(zoomLevel)
+				break
+		}
+	}
+
 }

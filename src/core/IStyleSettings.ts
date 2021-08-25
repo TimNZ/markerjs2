@@ -140,4 +140,9 @@ export interface IStyleSettings {
    * @since 2.10.0
    */
   notesAreaStyleClassName?: string;
+  /**
+   * Are zoom controls visible?
+   */
+  zoomControlsVisible?: boolean;
+
 }
